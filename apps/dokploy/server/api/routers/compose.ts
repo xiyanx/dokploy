@@ -25,13 +25,10 @@ import {
 	removeComposeDirectory,
 	removeDeploymentsByComposeId,
 	removeDomainById,
-	sleepCompose,
 	startCompose,
 	stopCompose,
 	updateCompose,
-	updateComposeAutoSleep,
 	updateLastActivity,
-	wakeCompose,
 } from "@dokploy/server";
 import {
 	type CompleteTemplate,
@@ -866,63 +863,6 @@ export const composeRouter = createTRPCRouter({
 					message: `Error importing template: ${error instanceof Error ? error.message : error}`,
 				});
 			}
-		}),
-	updateAutoSleep: protectedProcedure
-		.input(
-			z.object({
-				composeId: z.string(),
-				autoSleep: z.boolean(),
-				sleepTimeoutMinutes: z.number().min(1).max(1440).default(30),
-			}),
-		)
-		.mutation(async ({ input, ctx }) => {
-			const compose = await findComposeById(input.composeId);
-
-			if (
-				compose.project.organizationId !== ctx.session.activeOrganizationId
-			) {
-				throw new TRPCError({
-					code: "UNAUTHORIZED",
-					message: "You are not authorized to update this compose",
-				});
-			}
-
-			return await updateComposeAutoSleep(input.composeId, {
-				autoSleep: input.autoSleep,
-				sleepTimeoutMinutes: input.sleepTimeoutMinutes,
-			});
-		}),
-	sleep: protectedProcedure
-		.input(z.object({ composeId: z.string() }))
-		.mutation(async ({ input, ctx }) => {
-			const compose = await findComposeById(input.composeId);
-
-			if (
-				compose.project.organizationId !== ctx.session.activeOrganizationId
-			) {
-				throw new TRPCError({
-					code: "UNAUTHORIZED",
-					message: "You are not authorized to sleep this compose",
-				});
-			}
-
-			return await sleepCompose(input.composeId);
-		}),
-	wake: protectedProcedure
-		.input(z.object({ composeId: z.string() }))
-		.mutation(async ({ input, ctx }) => {
-			const compose = await findComposeById(input.composeId);
-
-			if (
-				compose.project.organizationId !== ctx.session.activeOrganizationId
-			) {
-				throw new TRPCError({
-					code: "UNAUTHORIZED",
-					message: "You are not authorized to wake this compose",
-				});
-			}
-
-			return await wakeCompose(input.composeId);
 		}),
 	updateActivity: protectedProcedure
 		.input(z.object({ composeId: z.string() }))
