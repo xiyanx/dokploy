@@ -5,6 +5,8 @@ import { applications } from "../db/schema/application";
 import { compose } from "../db/schema/compose";
 import { findServerById } from "./server";
 import { execAsync, execAsyncRemote } from "../utils/process/execAsync";
+import { removeService } from "../utils/docker/utils";
+import { mechanizeDockerContainer } from "../utils/builders/index";
 
 export interface AutoSleepConfig {
 	autoSleep: boolean;
@@ -96,6 +98,12 @@ export const sleepApplication = async (applicationId: string) => {
 	const application = await db.query.applications.findFirst({
 		where: eq(applications.applicationId, applicationId),
 		with: {
+			mounts: true,
+			security: true,
+			redirects: true,
+			ports: true,
+			registry: true,
+			project: true,
 			server: true,
 		},
 	});
@@ -111,14 +119,9 @@ export const sleepApplication = async (applicationId: string) => {
 		return application;
 	}
 
-	const command = `CONTAINERS=$(docker ps -q --filter "name=${application.appName}"); [ ! -z "$CONTAINERS" ] && docker stop $CONTAINERS || true`;
-
+	// True serverless: completely remove the Docker service
 	try {
-		if (application.serverId) {
-			await execAsyncRemote(application.serverId, command);
-		} else {
-			await execAsync(command);
-		}
+		await removeService(application.appName, application.serverId);
 
 		// Mark as sleeping
 		const [updatedApplication] = await db
@@ -141,6 +144,12 @@ export const wakeApplication = async (applicationId: string) => {
 	const application = await db.query.applications.findFirst({
 		where: eq(applications.applicationId, applicationId),
 		with: {
+			mounts: true,
+			security: true,
+			redirects: true,
+			ports: true,
+			registry: true,
+			project: true,
 			server: true,
 		},
 	});
@@ -156,14 +165,9 @@ export const wakeApplication = async (applicationId: string) => {
 		return application;
 	}
 
-	const command = `CONTAINERS=$(docker ps -aq --filter "name=${application.appName}"); [ ! -z "$CONTAINERS" ] && docker start $CONTAINERS || true`;
-
+	// True serverless: redeploy the service from scratch
 	try {
-		if (application.serverId) {
-			await execAsyncRemote(application.serverId, command);
-		} else {
-			await execAsync(command);
-		}
+		await mechanizeDockerContainer(application);
 
 		// Mark as awake and update last activity
 		const now = new Date().toISOString();
@@ -205,7 +209,8 @@ export const sleepCompose = async (composeId: string) => {
 		return composeEntry;
 	}
 
-	const command = `cd ${composeEntry.appName} && docker compose stop`;
+	// True serverless: completely remove containers and networks
+	const command = `cd ${composeEntry.appName} && docker compose down`;
 
 	try {
 		if (composeEntry.serverId) {
@@ -250,6 +255,7 @@ export const wakeCompose = async (composeId: string) => {
 		return composeEntry;
 	}
 
+	// True serverless: recreate containers and networks
 	const command = `cd ${composeEntry.appName} && docker compose up -d`;
 
 	try {
