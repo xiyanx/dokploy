@@ -111,7 +111,7 @@ export const sleepApplication = async (applicationId: string) => {
 		return application;
 	}
 
-	const command = `docker stop $(docker ps -q --filter "name=${application.appName}")`;
+	const command = `CONTAINERS=$(docker ps -q --filter "name=${application.appName}"); [ ! -z "$CONTAINERS" ] && docker stop $CONTAINERS || true`;
 
 	try {
 		if (application.serverId) {
@@ -156,7 +156,7 @@ export const wakeApplication = async (applicationId: string) => {
 		return application;
 	}
 
-	const command = `docker start $(docker ps -aq --filter "name=${application.appName}")`;
+	const command = `CONTAINERS=$(docker ps -aq --filter "name=${application.appName}"); [ ! -z "$CONTAINERS" ] && docker start $CONTAINERS || true`;
 
 	try {
 		if (application.serverId) {
