@@ -50,6 +50,48 @@ export const findScheduleById = async (scheduleId: string) => {
 	return schedule;
 };
 
+export const createStartApplicationSchedule = async (
+	applicationId: string,
+	cronExpression: string,
+	name: string,
+	userId: string,
+) => {
+	const [newSchedule] = await db.insert(schedules).values({
+		name,
+		cronExpression,
+		scheduleType: "start-application",
+		command: "start", // placeholder command
+		applicationId,
+		userId,
+		enabled: true,
+		shellType: "bash",
+	}).returning();
+
+	return newSchedule;
+};
+
+export const createStartComposeSchedule = async (
+	composeId: string,
+	serviceName: string | null,
+	cronExpression: string,
+	name: string,
+	userId: string,
+) => {
+	const [newSchedule] = await db.insert(schedules).values({
+		name,
+		cronExpression,
+		scheduleType: "start-compose",
+		command: "start", // placeholder command
+		composeId,
+		serviceName,
+		userId,
+		enabled: true,
+		shellType: "bash",
+	}).returning();
+
+	return newSchedule;
+};
+
 export const deleteSchedule = async (scheduleId: string) => {
 	const schedule = await findScheduleById(scheduleId);
 	const serverId =

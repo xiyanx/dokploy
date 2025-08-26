@@ -44,7 +44,44 @@ export const runCommand = async (scheduleId: string) => {
 		description: "Schedule",
 	});
 
-	if (scheduleType === "application" || scheduleType === "compose") {
+	if (scheduleType === "start-application") {
+		if (application) {
+			try {
+				const startCommand = `docker service update --replicas 1 ${application.appName}`;
+				if (application.serverId) {
+					await execAsyncRemote(application.serverId, startCommand);
+				} else {
+					await spawnAsync("bash", ["-c", startCommand]);
+				}
+				const writeStream = createWriteStream(deployment.logPath, { flags: "a" });
+				writeStream.write(`✅ Started application service: ${application.appName}\n`);
+				writeStream.end();
+			} catch (error) {
+				await updateDeploymentStatus(deployment.deploymentId, "error");
+				throw error;
+			}
+		}
+	} else if (scheduleType === "start-compose") {
+		if (compose) {
+			try {
+				const startCommand = serviceName 
+					? `cd ${compose.appName} && docker compose start ${serviceName}`
+					: `cd ${compose.appName} && docker compose start`;
+				
+				if (compose.serverId) {
+					await execAsyncRemote(compose.serverId, startCommand);
+				} else {
+					await spawnAsync("bash", ["-c", startCommand]);
+				}
+				const writeStream = createWriteStream(deployment.logPath, { flags: "a" });
+				writeStream.write(`✅ Started compose service: ${compose.appName}${serviceName ? `/${serviceName}` : ''}\n`);
+				writeStream.end();
+			} catch (error) {
+				await updateDeploymentStatus(deployment.deploymentId, "error");
+				throw error;
+			}
+		}
+	} else if (scheduleType === "application" || scheduleType === "compose") {
 		let containerId = "";
 		let serverId = "";
 		if (scheduleType === "application" && application) {
