@@ -382,7 +382,12 @@ export const generateConfigContainer = (
 			? {
 					RestartPolicy: restartPolicySwarm,
 				}
-			: {}),
+			: {
+					// Default: don't restart on failure to prevent continuous recreation
+					RestartPolicy: {
+						Condition: "none",
+					},
+				}),
 		...(placementSwarm
 			? {
 					Placement: placementSwarm,
