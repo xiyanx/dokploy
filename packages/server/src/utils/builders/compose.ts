@@ -1,5 +1,4 @@
 import {
-	createWriteStream,
 	existsSync,
 	mkdirSync,
 	writeFileSync,
@@ -17,6 +16,7 @@ import {
 	getEnviromentVariablesObject,
 	prepareEnvironmentVariables,
 } from "../docker/utils";
+import { createLogWriteStream } from "../logs/ensure-log-dir";
 import { execAsync, execAsyncRemote } from "../process/execAsync";
 import { spawnAsync } from "../process/spawnAsync";
 
@@ -25,7 +25,7 @@ export type ComposeNested = InferResultType<
 	{ project: true; mounts: true; domains: true }
 >;
 export const buildCompose = async (compose: ComposeNested, logPath: string) => {
-	const writeStream = createWriteStream(logPath, { flags: "a" });
+	const writeStream = await createLogWriteStream(logPath);
 	const { sourceType, appName, mounts, composeType, domains } = compose;
 	try {
 		const { COMPOSE_PATH } = paths();

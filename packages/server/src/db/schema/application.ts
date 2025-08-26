@@ -173,6 +173,11 @@ export const applications = pgTable("application", {
 	herokuVersion: text("herokuVersion").default("24"),
 	publishDirectory: text("publishDirectory"),
 	isStaticSpa: boolean("isStaticSpa"),
+	// Auto-sleep/scale-to-zero features
+	autoSleep: boolean("autoSleep").notNull().default(false),
+	sleepTimeoutMinutes: integer("sleepTimeoutMinutes").default(30),
+	lastActivity: text("lastActivity"),
+	isSleeping: boolean("isSleeping").notNull().default(false),
 	createdAt: text("createdAt")
 		.notNull()
 		.$defaultFn(() => new Date().toISOString()),
@@ -311,6 +316,10 @@ const createSchema = createInsertSchema(applications, {
 	watchPaths: z.array(z.string()).optional(),
 	previewLabels: z.array(z.string()).optional(),
 	cleanCache: z.boolean().optional(),
+	autoSleep: z.boolean().optional(),
+	sleepTimeoutMinutes: z.number().optional(),
+	lastActivity: z.string().optional(),
+	isSleeping: z.boolean().optional(),
 });
 
 export const apiCreateApplication = createSchema.pick({

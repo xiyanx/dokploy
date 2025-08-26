@@ -1,6 +1,7 @@
 import { createTRPCRouter } from "../api/trpc";
 import { adminRouter } from "./routers/admin";
 import { aiRouter } from "./routers/ai";
+import { autoSleepRouter } from "./routers/auto-sleep";
 import { applicationRouter } from "./routers/application";
 import { backupRouter } from "./routers/backup";
 import { bitbucketRouter } from "./routers/bitbucket";
@@ -46,6 +47,7 @@ import { volumeBackupsRouter } from "./routers/volume-backups";
 
 export const appRouter = createTRPCRouter({
 	admin: adminRouter,
+	autoSleep: autoSleepRouter,
 	docker: dockerRouter,
 	project: projectRouter,
 	application: applicationRouter,

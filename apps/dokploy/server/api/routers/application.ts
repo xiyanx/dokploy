@@ -23,6 +23,10 @@ import {
 	unzipDrop,
 	updateApplication,
 	updateApplicationStatus,
+	updateApplicationAutoSleep,
+	updateLastActivity,
+	sleepApplication,
+	wakeApplication,
 	writeConfig,
 	writeConfigRemote,
 	// uploadFileSchema
@@ -853,5 +857,79 @@ export const applicationRouter = createTRPCRouter({
 			}
 
 			return updatedApplication;
+		}),
+	updateAutoSleep: protectedProcedure
+		.input(
+			z.object({
+				applicationId: z.string(),
+				autoSleep: z.boolean(),
+				sleepTimeoutMinutes: z.number().min(1).max(1440).default(30),
+			}),
+		)
+		.mutation(async ({ input, ctx }) => {
+			const application = await findApplicationById(input.applicationId);
+
+			if (
+				application.project.organizationId !== ctx.session.activeOrganizationId
+			) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "You are not authorized to update this application",
+				});
+			}
+
+			return await updateApplicationAutoSleep(input.applicationId, {
+				autoSleep: input.autoSleep,
+				sleepTimeoutMinutes: input.sleepTimeoutMinutes,
+			});
+		}),
+	sleep: protectedProcedure
+		.input(z.object({ applicationId: z.string() }))
+		.mutation(async ({ input, ctx }) => {
+			const application = await findApplicationById(input.applicationId);
+
+			if (
+				application.project.organizationId !== ctx.session.activeOrganizationId
+			) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "You are not authorized to sleep this application",
+				});
+			}
+
+			return await sleepApplication(input.applicationId);
+		}),
+	wake: protectedProcedure
+		.input(z.object({ applicationId: z.string() }))
+		.mutation(async ({ input, ctx }) => {
+			const application = await findApplicationById(input.applicationId);
+
+			if (
+				application.project.organizationId !== ctx.session.activeOrganizationId
+			) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "You are not authorized to wake this application",
+				});
+			}
+
+			return await wakeApplication(input.applicationId);
+		}),
+	updateActivity: protectedProcedure
+		.input(z.object({ applicationId: z.string() }))
+		.mutation(async ({ input, ctx }) => {
+			const application = await findApplicationById(input.applicationId);
+
+			if (
+				application.project.organizationId !== ctx.session.activeOrganizationId
+			) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "You are not authorized to update this application",
+				});
+			}
+
+			await updateLastActivity(input.applicationId);
+			return true;
 		}),
 });

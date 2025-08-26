@@ -84,6 +84,11 @@ export const compose = pgTable("compose", {
 		.default(false),
 	triggerType: triggerType("triggerType").default("push"),
 	composeStatus: applicationStatus("composeStatus").notNull().default("idle"),
+	// Auto-sleep/scale-to-zero features
+	autoSleep: boolean("autoSleep").notNull().default(false),
+	sleepTimeoutMinutes: integer("sleepTimeoutMinutes").default(30),
+	lastActivity: text("lastActivity"),
+	isSleeping: boolean("isSleeping").notNull().default(false),
 	projectId: text("projectId")
 		.notNull()
 		.references(() => projects.projectId, { onDelete: "cascade" }),
@@ -155,6 +160,10 @@ const createSchema = createInsertSchema(compose, {
 	composePath: z.string().min(1),
 	composeType: z.enum(["docker-compose", "stack"]).optional(),
 	watchPaths: z.array(z.string()).optional(),
+	autoSleep: z.boolean().optional(),
+	sleepTimeoutMinutes: z.number().optional(),
+	lastActivity: z.string().optional(),
+	isSleeping: z.boolean().optional(),
 });
 
 export const apiCreateCompose = createSchema.pick({

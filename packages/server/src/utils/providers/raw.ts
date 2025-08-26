@@ -1,7 +1,7 @@
-import { createWriteStream } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { paths } from "@dokploy/server/constants";
+import { createLogWriteStream } from "../logs/ensure-log-dir";
 import type { Compose } from "@dokploy/server/services/compose";
 import { encodeBase64 } from "../docker/utils";
 import { recreateDirectory } from "../filesystem/directory";
@@ -10,7 +10,7 @@ import { execAsyncRemote } from "../process/execAsync";
 export const createComposeFile = async (compose: Compose, logPath: string) => {
 	const { COMPOSE_PATH } = paths();
 	const { appName, composeFile } = compose;
-	const writeStream = createWriteStream(logPath, { flags: "a" });
+	const writeStream = await createLogWriteStream(logPath);
 	const outputPath = join(COMPOSE_PATH, appName, "code");
 
 	try {

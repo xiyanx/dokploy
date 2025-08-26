@@ -1,6 +1,6 @@
-import { createWriteStream } from "node:fs";
 import { type ApplicationNested, mechanizeDockerContainer } from "../builders";
 import { pullImage } from "../docker/utils";
+import { createLogWriteStream } from "../logs/ensure-log-dir";
 
 interface RegistryAuth {
 	username: string;
@@ -19,7 +19,7 @@ export const buildDocker = async (
 		registryUrl: application.registryUrl || "",
 	};
 
-	const writeStream = createWriteStream(logPath, { flags: "a" });
+	const writeStream = await createLogWriteStream(logPath);
 
 	writeStream.write(`\nBuild ${buildType}\n`);
 

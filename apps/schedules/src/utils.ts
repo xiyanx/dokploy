@@ -2,6 +2,7 @@ import {
 	cleanUpDockerBuilder,
 	cleanUpSystemPrune,
 	cleanUpUnusedImages,
+	executeWakeSchedule,
 	findBackupById,
 	findScheduleById,
 	findServerById,
@@ -98,7 +99,14 @@ export const runJobs = async (job: QueueJob) => {
 			const { scheduleId } = job;
 			const schedule = await findScheduleById(scheduleId);
 			if (schedule.enabled) {
-				await runCommand(schedule.scheduleId);
+				if (schedule.scheduleType === "wake-application" || schedule.scheduleType === "wake-compose") {
+					await executeWakeSchedule(
+						schedule.applicationId,
+						schedule.composeId,
+					);
+				} else {
+					await runCommand(schedule.scheduleId);
+				}
 			}
 		} else if (job.type === "volume-backup") {
 			const { volumeBackupId } = job;

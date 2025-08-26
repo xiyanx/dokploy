@@ -1,7 +1,7 @@
-import { createWriteStream } from "node:fs";
 import type { InferResultType } from "@dokploy/server/types/with";
 import type { CreateServiceOptions } from "dockerode";
 import { uploadImage, uploadImageRemoteCommand } from "../cluster/upload";
+import { createLogWriteStream } from "../logs/ensure-log-dir";
 import {
 	calculateResources,
 	generateBindMounts,
@@ -38,7 +38,7 @@ export const buildApplication = async (
 	application: ApplicationNested,
 	logPath: string,
 ) => {
-	const writeStream = createWriteStream(logPath, { flags: "a" });
+	const writeStream = await createLogWriteStream(logPath);
 	const { buildType, sourceType } = application;
 	try {
 		writeStream.write(
